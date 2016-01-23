@@ -1,2 +1,4 @@
 *.swp
 *.EXE
+*.bin
+a.out
