@@ -13,4 +13,4 @@ So far the following operating system functions are implemented:
 * Load a program into memory and execute it.
 
 Todo:
-* Get DONKEY.BAS running. Strategy: write a basic->BIOS compiler.
+* Get DONKEY.BAS running. Strategy: write a BASIC->BIOS compiler.
