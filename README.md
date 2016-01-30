@@ -10,6 +10,7 @@ to assemble it. To run DealOS, we invoke the qemu i386 emulator with DealOS.bin 
 
 So far the following operating system functions are implemented:
 * Print friendly welcome message.
+* Load a program into memory and execute it.
 
 Todo:
-* Run DOS MZ format executable files.
+* Get DONKEY.BAS running. Strategy: write a basic->BIOS compiler.
