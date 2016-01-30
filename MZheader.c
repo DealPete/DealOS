@@ -23,11 +23,16 @@ struct DOS_Header
     long  e_lfanew;
 };
 
-int main(void) {
+int main(int argc, char *argv[]) {
     FILE *exefile;
     struct DOS_Header header;
 
-    exefile=fopen("DONKEYQB.EXE", "rb");
+    if (argc == 1) {
+	printf("Usage: a.out [EXEFILE]/n");
+	return 1;
+    }
+
+    exefile=fopen(argv[1], "rb");
     
     if (!exefile) {
 	printf("Can't read file!");
@@ -38,9 +43,13 @@ int main(void) {
     
     if (!strcmp(header.signature, "MZ"))
 	printf("File should start with Mark Zbikowski's initials. This is not a DOS .EXE file.");
+
+	printf("Number of blocks: %d\n", header.nblocks);
+    printf("Number of entries in relocation table: %d\n", header.nreloc);
+    printf("Header size: %d bytes\n\n", 16*header.hdrsize);
     
-    printf("Stack segment: %x\n", header.ss);
-    printf("Stack pointer: %x\n", header.sp);
-    printf("Instruction pointer: %x\n", header.ip);
-    printf("Code segment: %x\n", header.cs);
+    printf("Stack segment: %xh\n", header.ss);
+    printf("Stack pointer: %xh\n", header.sp);
+    printf("Instruction pointer: %xh\n", header.ip);
+    printf("Code segment: %xh\n", header.cs);
 }
