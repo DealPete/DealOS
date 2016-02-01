@@ -1,3 +1,5 @@
+// Print details of a MS-DOS .EXE file header.
+
 #include <stdio.h>
 
 struct DOS_Header 

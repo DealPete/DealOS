@@ -12,7 +12,6 @@
 
     mov ah, 0Eh
     
-    mov [bootDevice], dl
     mov si, welcomeMessage
 
     mov ah, 0Eh		
@@ -39,34 +38,31 @@ done:
 ; To use int 13h, we must convert the logical address to CHS form - see
 ; https://en.wikipedia.org/wiki/Logical_block_addressing#CHS_conversion
 
-    mov cx, 1		; DONKEYQB.EXE is in sector 1
+    mov cl, 2		; the program is in sector 1
     mov dh, 0		; on head 0
+	mov ch, 0		; on track 0
 
-    mov ax, 1000h	; load file at 1000:0000h
+    mov ax, 0x800
+	mov ds, ax
     mov es, ax
 
-    mov ah, 2		; read DONKEYQB.EXE from disk
-    mov al, 83
-    mov dl, [bootDevice]
+    mov ah, 2		; read program from disk
+    mov al, 64		; assume program is 64K
+    mov dl, 80h
     mov bx, 0h
 
-    stc
     int 13h
-  
-    mov ax, 1000h
-    mov ds, ax
-    mov es, ax
 
-    jmp 0x1000:0xA3D0			; start the program
-    
+   	jmp 0x800:0000
+
 ; ---------------------------------------------------------------------
 ; VARIABLES
-    welcomeMessage db 'Welcome to DealOS!', 0
+    welcomeMessage db `Welcome to DealOS!\n\r`, 0
 
-    bootDevice		db 0
     sectorsPerTrack	db 0
     headsPerCylinder	db 0
     
     times 510-($-$$) db 0
 
     dw 0xAA55		; The standard PC boot signature
+
