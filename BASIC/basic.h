@@ -3,19 +3,19 @@
 void init(FILE*);
 int final();
 
-typedef enum { typeStrPtr, typeId, typeOpr } nodeEnum;
+typedef enum { typeCon, typeStrPtr, typeSym, typeOpr } nodeEnum;
 
-/*typedef struct {
+typedef struct {
 	int value;
-} conNodeType;*/
+} conNodeType;
 
 typedef struct {
 	char* ptr;
 } strPtrNodeType;
 
 typedef struct {
-	int i;
-} idNodeType;
+	struct symbol* sym;
+} symNodeType;
 
 typedef struct {
 	int oper;
@@ -27,12 +27,22 @@ typedef struct nodeTypeTag {
 	nodeEnum type;
 
 	union {
-		//conNodeType con;
+		conNodeType con;
 		strPtrNodeType strPtr;
-		idNodeType id;
+		symNodeType sym;
 		oprNodeType opr;
 	};
 } nodeType;
 
-extern int sym[26];
+struct symbol {
+	char* name;
+	int id;
+	int type;
+	union {
+		int ival;
+		char* sptr;
+	};
+	struct symbol* next;
+} symbol0;
+
 #endif

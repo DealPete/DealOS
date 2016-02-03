@@ -2,16 +2,17 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "basic.h"
 
+nodeType *con(int value);
 nodeType *opr(int oper, int nops, ...);
-nodeType *id(int i);
+nodeType *sym(char* ptr);
 nodeType *str(char* ptr);
 
 void freeNode(nodeType* p);
 int ex(nodeType* p);
-
-int sym[26];
+int yylex();
 int yyerror(const char*);
 %}
 
@@ -23,7 +24,7 @@ int yyerror(const char*);
 }                   
 
 %token <ival> INTEGER
-%token <sval> STRING
+%token <sval> STRING VAR
 %token CLS END PRINT
 
 %type <nPtr> statement expr
@@ -41,13 +42,27 @@ lnum		: INTEGER
 statement	: CLS				{ $$ = opr(CLS, 0); }
 			| END				{ $$ = opr(END, 0); }
 			| PRINT expr		{ $$ = opr(PRINT, 1, $2); }
+			| VAR '=' expr		{ $$ = opr('=', 2, sym($1), $3); }
 			;
 
 expr		: STRING			{ $$ = str($1); }
+			| INTEGER			{ $$ = con($1); }
+			| VAR				{ $$ = sym($1); } 
 			;
 %%
 
 #include "lex.yy.c"
+
+nodeType *con(int value) {
+	nodeType *p;
+
+	if ((p = malloc(sizeof(nodeType))) == NULL)
+		yyerror("out of memory");
+	
+	p->type = typeCon;
+	p->con.value = value;
+	return p;
+}
 
 nodeType *str(char* ptr) {
 	nodeType *p;
@@ -59,6 +74,47 @@ nodeType *str(char* ptr) {
 	p->strPtr.ptr = ptr;
 	return p;
 }
+
+nodeType *sym(char* ptr) {
+	nodeType *p;
+
+	if ((p = malloc(sizeof(nodeType))) == NULL)
+		yyerror("out of memory");
+	
+	p->type = typeSym;
+	
+	struct symbol* s = &symbol0;
+
+	for(;;) {
+		if (s->next == NULL) {
+			if ((s->next = malloc(sizeof(struct symbol))) == NULL)
+				yyerror("out of memory");
+			p->sym.sym = s->next;
+			s->next->name = ptr;
+			s->next->id = s->id + 1;
+			switch (ptr[strlen(ptr) - 1]) {
+			case '$':
+				s->next->type = STRING;
+				s->next->sptr = NULL;
+				break;
+
+			case '%':
+				s->next->type = INTEGER;
+				s->next->ival = 0;
+				break;
+			}
+			break;
+		}
+
+		if (!strcmp(s->next->name, ptr)) {
+			p->sym.sym = s->next;
+			break;
+		}
+		s = s->next;
+	}
+	return p;
+}
+
 
 nodeType *opr(int oper, int nops, ...) {
 	va_list ap;
@@ -118,6 +174,7 @@ int main(int argc, char** argv) {
 		init(NULL);
     yyin = parseFile;
 	yyparse();
-	return final();
+	if (!yyparse())
+		return final();
 }
 

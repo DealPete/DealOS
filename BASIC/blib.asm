@@ -4,13 +4,13 @@ print:
 	pusha
 	mov ah, 0Eh
 
-print_repeat:
+.repeat:
 	lodsb
 	cmp al, 0
-	je print_done
+	je .done
 	int 10h
-	jmp print_repeat
+	jmp .repeat
 
-print_done:
+.done:
 	popa
 	ret
