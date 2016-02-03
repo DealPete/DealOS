@@ -82,13 +82,13 @@ int ex(nodeType *p) {
 			switch(p->opr.op[0]->sym.sym->type) {
 			case INTEGER:
 				if(p->opr.op[1]->type != typeCon)
-					yyerror("Syntax error, assigning string to numeric type.");
+					yyerror("Syntax error, assigning string to numeric variable.");
 				fprintf(f, "\tmov [sym%d], word %d\n", p->opr.op[0]->sym.sym->id, p->opr.op[1]->con.value);
 				break;
 
 			case STRING:
 				if(p->opr.op[1]->type != typeStrPtr)
-					yyerror("Syntax error, assigning string to numeric type.");
+					yyerror("Syntax error, assigning number to string variable.");
 				ex(p->opr.op[1]);
 				fprintf(f, "\tmov [sym%d], ax\n", p->opr.op[0]->sym.sym->id);
 				break;
