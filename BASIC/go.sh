@@ -27,12 +27,12 @@ fi
 echo "done"
 #rm "$1.asm"
 cd ..
-./assemble.sh "basic/$1.bin"
+./assemble.sh "BASIC/$1.bin"
 
 if [ $? -ne 0 ]; then
 	exit $?
 fi
 
-rm "basic/$1.bin"
+rm "BASIC/$1.bin"
 qemu-system-i386 -hda "DealOS.bin"
-cd basic
+cd BASIC

@@ -33,12 +33,15 @@ int ex(nodeType *p) {
 	switch(p->type) {
 	case typeCon:
 		fprintf(f, "\tmov si, %d\n", p->con.value);
+		return INTEGER;
 		break;
+
 	case typeStrPtr:
 		if ((stringTable[stringTableSize] = malloc(strlen(p->strPtr.ptr))) == NULL)
 			yyerror("out of memory adding string to table");
 		strcpy(stringTable[stringTableSize], p->strPtr.ptr);
 		fprintf(f, "\tmov ax, str%d\n", stringTableSize++);
+		return STRING;
 		break;
 
 	case typeSym:
@@ -46,11 +49,13 @@ int ex(nodeType *p) {
 			yyerror("Syntax error, variable unassigned.");
 		switch(p->sym.sym->type) {
 		case INTEGER:
-			fprintf(f, "\tmov ax, %d\n", p->sym.sym->ival);
+			fprintf(f, "\tmov ax, [sym%d]\n", p->sym.sym->id);
+			return INTEGER;
 			break;
 
 		case STRING:
 			fprintf(f, "\tmov ax, [sym%d]\n", p->sym.sym->id);
+			return STRING;
 			break;
 		}
 		break;
@@ -68,8 +73,16 @@ int ex(nodeType *p) {
 			break;
 
 		case PRINT:
-			ex(p->opr.op[0]);
-			fputs("\tmov si, ax\n", f);
+			switch(ex(p->opr.op[0])) {
+			case INTEGER:
+				fputs("\tcall intToStr\n", f);
+				break;
+
+			case STRING:
+				fputs("\tmov si, ax\n", f);
+				break;
+			}
+
 			fputs("\tcall print\n", f);
 			fputs("\tmov ah, 0x0E\n", f);
 			fputs("\tmov al, 0x0D\n", f); 
@@ -124,11 +137,13 @@ int final() {
 			fprintf(f, "sym%d: resb 255\n", s->id);
 			break;
 		}
-
+		
 		prev = s;
 		s = s->next;
 		free(prev);
 	}
 
+	fputs("\nheap:", f);
+	
 	return 0;
 }

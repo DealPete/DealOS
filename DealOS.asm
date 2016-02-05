@@ -1,11 +1,10 @@
     BITS 16
     
-    mov ax, 07C0h	; set up 4K of stack space
-    add ax, 4122	; after the 32 paragraph bootloader
-    cli			; and the first 64K segment
+    mov ax, 0800h	; set up 4K of stack space
+    cli				; and the first 64K segment
     mov ss, ax
-    mov sp, 4096
-    sti			; disable interrupts while changing stack
+    mov sp, 0xFFFF
+    sti				; disable interrupts while changing stack
 
     mov ax, 07C0h	; set data segment to beginning of program in memory
     mov ds, ax
