@@ -5,16 +5,28 @@ int yyerror(const char*);
 void parseString();
 %}
 
+%option yylineno
+
 %%
-[ \t\n] ;
-[A-Z]+(%|$)	{ yylval.sval = strdup(yytext); return VAR; }
-[0-9]+		{ yylval.ival = atoi(yytext); return INTEGER; }
-=			{ return *yytext; }
-"CLS"		{ return CLS; }
-"END"		{ return END; }
-"PRINT"		{ return PRINT; }
-\".*\"		{ parseString(); return STRING; }
-.			yyerror("unknown token");
+"\n"					{ return EOL; }
+\"[^"]*\"				{ parseString(); return STRING; }
+"GO TO"					{ return GOTO; }
+[ \t] ;
+[0-9]+					{ yylval.ival = atoi(yytext); return INTEGER; }
+[=+*/\-,;<>]			{ return *yytext; }
+"CLS"					{ return CLS; }
+"DATA"					{ return DATA; }
+"END"					{ return END; }
+"GOTO"					{ return GOTO; }
+"IF"					{ return IF; }
+"INPUT"					{ return INPUT; }
+"LET" ;
+"PRINT"					{ return PRINT; }
+"READ"					{ return READ; }
+"REM"[^\n]* ;
+"THEN"					{ return THEN; }
+[A-Z][A-Z0-9]*(%|$)?	{ yylval.sval = strdup(yytext); return VAR; }
+.						yyerror("unknown token");
 %%
 
 int yyerror(char const *str) {

@@ -2,8 +2,15 @@
 #define __BASIC_H__
 void init(FILE*);
 int final();
+int stmtno;
 
-typedef enum { typeCon, typeStrPtr, typeSym, typeOpr } nodeEnum;
+typedef enum { typeList, typeCon, typeStrPtr, typeSym, typeOpr } nodeEnum;
+
+
+typedef struct {
+	struct nodeTypeTag* node;
+	struct nodeTypeTag* next;
+} listNodeType;
 
 typedef struct {
 	int value;
@@ -27,6 +34,7 @@ typedef struct nodeTypeTag {
 	nodeEnum type;
 
 	union {
+		listNodeType list;
 		conNodeType con;
 		strPtrNodeType strPtr;
 		symNodeType sym;

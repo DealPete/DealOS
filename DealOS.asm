@@ -1,7 +1,7 @@
     BITS 16
     
-    mov ax, 0800h	; set up 4K of stack space
-    cli				; and the first 64K segment
+    mov ax, 0800h	; put the stack pointer at the 
+    cli				; end of the 64k segment.
     mov ss, ax
     mov sp, 0xFFFF
     sti				; disable interrupts while changing stack

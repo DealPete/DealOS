@@ -2,20 +2,23 @@
 echo -n "Compiling basic compiler..."
 yacc -d basic.y
 
-if [ $? -ne 0 ]; then
-	exit $?
+rval=$?
+if [ $rval -ne 0 ]; then
+	exit $rval
 fi
 
 flex -i basic.l
 
-if [ $? -ne 0 ]; then
-	exit $?
+rval=$?
+if [ $rval -ne 0 ]; then
+	exit $rval
 fi
 
 cc compiler.c y.tab.c -o basic -lfl -ly
 
-if [ $? -ne 0 ]; then
-	exit $?
+rval=$?
+if [ $rval -ne 0 ]; then
+	exit $rval
 fi
 
 echo "done"

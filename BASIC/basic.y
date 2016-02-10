@@ -5,13 +5,18 @@
 #include <string.h>
 #include "basic.h"
 
+#define YYDEBUG 1
+
+nodeType *list(nodeType* node, nodeType* next);
 nodeType *con(int value);
 nodeType *opr(int oper, int nops, ...);
 nodeType *sym(char* ptr);
 nodeType *str(char* ptr);
 
-void freeNode(nodeType* p);
-int ex(nodeType* p);
+void addData(int);
+void labelLine(int);
+void freeNode(nodeType*);
+int ex(nodeType*);
 int yylex();
 int yyerror(const char*);
 %}
@@ -25,28 +30,59 @@ int yyerror(const char*);
 
 %token <ival> INTEGER
 %token <sval> STRING VAR
-%token CLS END PRINT
+%token CLS DATA END GOTO IF THEN INPUT LET PRINT READ REM EOL
 
-%type <nPtr> statement expr
+%left '=' '<' '>'
+%left '+' '-'
+%left '*' '/'
+
+%type <nPtr> statement expr prexprs varlist
 %%
-program		: line program	
+program		: line program
 			|
 			;
-line		: lnum statements	
+line		: INTEGER { labelLine($1); } statements EOL
+			| INTEGER { labelLine($1); } DATA datalist EOL
+			| INTEGER { labelLine($1); } EOL
+			| EOL
 			;
-statements	: statement ':' statements 	{ ex($1); freeNode($1); }
-			| statement					{ ex($1); freeNode($1); }
+statements	: statement ':' statements 	{ stmtno++; ex($1); freeNode($1); }
+			| statement					{ stmtno++; ex($1); freeNode($1); }
 			;
-lnum		: INTEGER
-			;
-statement	: CLS				{ $$ = opr(CLS, 0); }
-			| END				{ $$ = opr(END, 0); }
-			| PRINT expr		{ $$ = opr(PRINT, 1, $2); }
-			| VAR '=' expr		{ $$ = opr('=', 2, sym($1), $3); }
+statement	: CLS					{ $$ = opr(CLS, 0); }
+			| END					{ $$ = opr(END, 0); }
+			| GOTO INTEGER			{ $$ = opr(GOTO, 1, con($2)); }
+			| INPUT varlist			{ $$ = opr(INPUT, 1, $2); }
+			| PRINT prexprs			{ $$ = opr(PRINT, 1, $2); }
+			| PRINT					{ $$ = opr(PRINT, 1, str("\\n\\r")); }
+			| READ varlist			{ $$ = opr(READ, 1, $2); }
+			| VAR '=' expr			{ $$ = opr(LET, 2, sym($1), $3); }
+			| IF expr THEN INTEGER	{ $$ = opr(IF, 2, $2, con($4)); }
 			;
 
-expr		: STRING			{ $$ = str($1); }
+prexprs		: expr ';' prexprs	{ $$ = opr(PRINT, 2, $1, $3); } 
+			| expr ',' prexprs	{ $$ = opr(PRINT, 3, $1, str("\\t"), $3); }
+			| expr ';'			{ $$ = opr(PRINT, 1, $1); }
+			| expr				{ $$ = opr(PRINT, 2, $1, str("\\n\\r")); }
+			;
+
+datalist	: INTEGER { addData($1); } ',' datalist		
+			| INTEGER { addData($1); }
+			;
+
+varlist		: VAR ',' varlist	{ $$ = list(sym($1), $3); }
+			| VAR 				{ $$ = list(sym($1), NULL); }
+			;
+
+expr		: expr '+' expr		{ $$ = opr('+', 2, $1, $3); }
+			| expr '-' expr		{ $$ = opr('-', 2, $1, $3); }
+			| expr '*' expr		{ $$ = opr('*', 2, $1, $3); }
+			| expr '/' expr		{ $$ = opr('/', 2, $1, $3); }
+			| expr '=' expr		{ $$ = opr('=', 2, $1, $3); }
+			| expr '<' expr		{ $$ = opr('<', 2, $1, $3); }
+			| expr '>' expr		{ $$ = opr('>', 2, $1, $3); }
 			| INTEGER			{ $$ = con($1); }
+			| STRING			{ $$ = str($1); }
 			| VAR				{ $$ = sym($1); } 
 			;
 %%
@@ -98,7 +134,7 @@ nodeType *sym(char* ptr) {
 				s->next->sptr = NULL;
 				break;
 
-			case '%':
+			default:	
 				s->next->type = INTEGER;
 				s->next->ival = 0;
 				break;
@@ -115,7 +151,17 @@ nodeType *sym(char* ptr) {
 	return p;
 }
 
+nodeType *list(nodeType* head, nodeType* next) {
+	nodeType* p;
+	if ((p = malloc(sizeof(nodeType))) == NULL)
+		yyerror("out of memory");
 
+	p->type = typeList;
+	p->list.node = head;
+	p->list.next = next;
+}
+
+	
 nodeType *opr(int oper, int nops, ...) {
 	va_list ap;
 	nodeType *p;
@@ -140,6 +186,12 @@ void freeNode(nodeType* p) {
 	int i;
 
 	if (!p) return;
+	if (p->type == typeList) {
+		free(p->list.node);
+		if (p->list.next)
+			free(p->list.next);
+	}
+
 	if (p->type == typeOpr) {
 		for(i = 0; i < p->opr.nops; i++)
 			freeNode(p->opr.op[i]);
@@ -155,6 +207,7 @@ int usage() {
 }
 
 int main(int argc, char** argv) {
+	//yydebug = 1;
     if (argc == 1) {
 		usage();
     }
