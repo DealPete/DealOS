@@ -71,11 +71,12 @@ int ex(nodeType *p) {
 
 	case typeList:
 		if (p->list.next)
-			ex(p->list.next);
+			fprintf(f, "\tpush word %d\n", ex(p->list.next));
+		//	fprintf(f, "\tpush word %d\n", ex(p->list.next) == STRING ? 1 : 0);
 		else
 			fputs("\tmov cx, 0\n", f);
-
-		fprintf(f, "\tpush sym%d\n", p->list.node->sym.sym->id);
+		//fprintf(f, "\tpush word %d\n", ex(p->list.node) == STRING ? 1 : 0);
+		fprintf(f, "\tpush word %d\n", ex(p->list.node));
 		fputs("\tinc cx\n", f);
 		break;
 
@@ -86,6 +87,10 @@ int ex(nodeType *p) {
 			fputs("\tmov ah, 0\n", f);
 			fputs("\tmov al, 0\n", f);
 			fputs("\tint 10h\n", f);
+			break;
+
+		case DIM:
+			p->opr.op[0]->sym.sym->size *= p->opr.op[1]->con.value;
 			break;
 
 		case END:
@@ -108,37 +113,63 @@ int ex(nodeType *p) {
 			fprintf(f, ".loop%d:\n", stmtno);
 			fputs("\tmov bx, [doffset]\n", f);
 			fputs("\tmov ax, [bx]\n", f);
+			//fputs("\tppo bx		; ignore data type for now.\n", f);
 			fputs("\tpop bx\n", f);
 			fputs("\tmov [bx], ax\n", f);
 			fputs("\tadd [doffset], word 2\n", f);
 			fprintf(f, "\tloop .loop%d\n", stmtno);
 			break;
 
+		case REF:
+			if (p->opr.op[0]->sym.sym == NULL)
+				yyerror("Syntax error, variable unassigned.");
+			switch(p->opr.op[0]->sym.sym->type) {
+			case INTEGER:
+				fprintf(f, "\tpush word [sym%d + %d]\n", p->opr.op[0]->sym.sym->id,
+					p->opr.op[1]->con.value * 2);
+				return INTEGER;
+
+			case STRING:
+				fprintf(f, "\tmov ax, sym%d\n", p->opr.op[0]->sym.sym->id);
+				fprintf(f, "\tadd ax, %d\n", p->opr.op[1]->con.value * 256);
+				fputs("\tpush si, ax\n", f);
+				return STRING;
+			}
+			break;
+
 		case INPUT:
 			ex(p->opr.op[0]);
 			fputs("\tpush cx\n", f);
 			fputs("\tcall getInput\n", f);
-			fputs("\tmov ax, 2\n", f);
-			fputs("\tpop cx\n", f);
-			fputs("\tmul cx\n", f);
+			fputs("\tpop ax\n", f);
+			fputs("\tshl ax, 2\n", f);
 			fputs("\tadd sp, ax\n", f);
 			break;
 
 		case LET:
-			switch(p->opr.op[0]->sym.sym->type) {
+			switch( ex(p->opr.op[0]) ) {
 			case INTEGER:
 				if(ex(p->opr.op[1]) != INTEGER)
 					yyerror("Syntax error, assigning string to numeric variable.");
 				fputs("\tpop ax\n", f);
-				fprintf(f, "\tmov [sym%d], ax\n", p->opr.op[0]->sym.sym->id);
+				fputs("\tpop bx\n", f);
+				fputs("\tmov [bx], ax\n", f);
 				break;
 
 			case STRING:
 				if(ex(p->opr.op[1]) != STRING)
 					yyerror("Syntax error, assigning number to string variable.");
-				fprintf(f, "\tmov [sym%d], si\n", p->opr.op[0]->sym.sym->id);
+				fputs("\tpop bx\n", f);
+				fputs("\tmov [bx], si\n", f);
 				break;
 			}
+			break;
+
+		case LVAL:
+			fprintf(f, "\tlea ax, [sym%d + %d]\n", 
+				p->opr.op[0]->sym.sym->id, p->opr.op[1]->con.value * 2);
+			fputs("\tpush ax\n", f);
+			return p->opr.op[0]->sym.sym->type;
 			break;
 
 		case PRINT:
@@ -276,15 +307,7 @@ int final() {
 
 	fprintf(f, "doffset: resw 1\t; Beginning of data from DATA statements.\n");
 	while (s != NULL) {
-		switch (s->type) {
-		case INTEGER:
-			fprintf(f, "sym%d: resw 1\n", s->id);
-			break;
-
-		case STRING:
-			fprintf(f, "sym%d: resb 255\n", s->id);
-			break;
-		}
+		fprintf(f, "sym%d: resb %d\n", s->id, s->size);
 		
 		prev = s;
 		s = s->next;

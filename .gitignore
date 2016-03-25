@@ -1,6 +1,10 @@
+*.f
 *.BAS
 *.bas
 *.swp
 *.EXE
 *.bin
 a.out
+example.*
+examples
+oneMillionZeros

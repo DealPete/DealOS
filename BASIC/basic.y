@@ -29,14 +29,15 @@ int yyerror(const char*);
 }                   
 
 %token <ival> INTEGER
-%token <sval> STRING VAR
-%token CLS DATA END GOTO IF THEN INPUT LET PRINT READ REM EOL
+%token <sval> STRING SYM
+%token CLS DATA END GOTO IF THEN INPUT LET PRINT READ REM EOL DIM
+%token LVAL REF
 
 %left '=' '<' '>'
 %left '+' '-'
 %left '*' '/'
 
-%type <nPtr> statement expr prexprs varlist
+%type <nPtr> statement expr prexprs lval lvals
 %%
 program		: line program
 			|
@@ -49,15 +50,16 @@ line		: INTEGER { labelLine($1); } statements EOL
 statements	: statement ':' statements 	{ stmtno++; ex($1); freeNode($1); }
 			| statement					{ stmtno++; ex($1); freeNode($1); }
 			;
-statement	: CLS					{ $$ = opr(CLS, 0); }
-			| END					{ $$ = opr(END, 0); }
-			| GOTO INTEGER			{ $$ = opr(GOTO, 1, con($2)); }
-			| INPUT varlist			{ $$ = opr(INPUT, 1, $2); }
-			| PRINT prexprs			{ $$ = opr(PRINT, 1, $2); }
-			| PRINT					{ $$ = opr(PRINT, 1, str("\\n\\r")); }
-			| READ varlist			{ $$ = opr(READ, 1, $2); }
-			| VAR '=' expr			{ $$ = opr(LET, 2, sym($1), $3); }
-			| IF expr THEN INTEGER	{ $$ = opr(IF, 2, $2, con($4)); }
+statement	: CLS						{ $$ = opr(CLS, 0); }
+			| DIM SYM '(' INTEGER ')'	{ $$ = opr(DIM, 2, sym($2), con($4)); }
+			| END						{ $$ = opr(END, 0); }
+			| GOTO INTEGER				{ $$ = opr(GOTO, 1, con($2)); }
+			| INPUT lvals				{ $$ = opr(INPUT, 1, $2); }
+			| PRINT prexprs				{ $$ = opr(PRINT, 1, $2); }
+			| PRINT						{ $$ = opr(PRINT, 1, str("\\n\\r")); }
+			| READ lvals				{ $$ = opr(READ, 1, $2); }
+			| lval '=' expr				{ $$ = opr(LET, 2, $1, $3); }
+			| IF expr THEN INTEGER		{ $$ = opr(IF, 2, $2, con($4)); }
 			;
 
 prexprs		: expr ';' prexprs	{ $$ = opr(PRINT, 2, $1, $3); } 
@@ -66,24 +68,29 @@ prexprs		: expr ';' prexprs	{ $$ = opr(PRINT, 2, $1, $3); }
 			| expr				{ $$ = opr(PRINT, 2, $1, str("\\n\\r")); }
 			;
 
-datalist	: INTEGER { addData($1); } ',' datalist		
+datalist	: INTEGER { addData($1); } ',' datalist	
 			| INTEGER { addData($1); }
 			;
 
-varlist		: VAR ',' varlist	{ $$ = list(sym($1), $3); }
-			| VAR 				{ $$ = list(sym($1), NULL); }
+lvals		: lval ',' lvals		{ $$ = list($1, $3); }
+			| lval	 				{ $$ = list($1, NULL); }
 			;
 
-expr		: expr '+' expr		{ $$ = opr('+', 2, $1, $3); }
-			| expr '-' expr		{ $$ = opr('-', 2, $1, $3); }
-			| expr '*' expr		{ $$ = opr('*', 2, $1, $3); }
-			| expr '/' expr		{ $$ = opr('/', 2, $1, $3); }
-			| expr '=' expr		{ $$ = opr('=', 2, $1, $3); }
-			| expr '<' expr		{ $$ = opr('<', 2, $1, $3); }
-			| expr '>' expr		{ $$ = opr('>', 2, $1, $3); }
-			| INTEGER			{ $$ = con($1); }
-			| STRING			{ $$ = str($1); }
-			| VAR				{ $$ = sym($1); } 
+lval		: SYM '(' INTEGER ')'	{ $$ = opr(LVAL, 2, sym($1), con($3)); }
+			| SYM					{ $$ = opr(LVAL, 2, sym($1), con(0) ); }
+			;
+
+expr		: expr '+' expr			{ $$ = opr('+', 2, $1, $3); }
+			| expr '-' expr			{ $$ = opr('-', 2, $1, $3); }
+			| expr '*' expr			{ $$ = opr('*', 2, $1, $3); }
+			| expr '/' expr			{ $$ = opr('/', 2, $1, $3); }
+			| expr '=' expr			{ $$ = opr('=', 2, $1, $3); }
+			| expr '<' expr			{ $$ = opr('<', 2, $1, $3); }
+			| expr '>' expr			{ $$ = opr('>', 2, $1, $3); }
+			| INTEGER				{ $$ = con($1); }
+			| STRING				{ $$ = str($1); }
+			| SYM '(' INTEGER ')'	{ $$ = opr(REF, 2, sym($1), con($3)); }
+			| SYM					{ $$ = sym($1); } 
 			;
 %%
 
@@ -131,11 +138,13 @@ nodeType *sym(char* ptr) {
 			switch (ptr[strlen(ptr) - 1]) {
 			case '$':
 				s->next->type = STRING;
+				s->next->size = 256;
 				s->next->sptr = NULL;
 				break;
 
 			default:	
 				s->next->type = INTEGER;
+				s->next->size = 2;
 				s->next->ival = 0;
 				break;
 			}

@@ -20,16 +20,28 @@ fi
 
 echo "done"
 echo -n "assembling $1.asm..."
-nasm "$1.asm" -o "$1.bin"
 
-rval=$?
-if [ $rval -ne 0 ]; then
-	exit $rval
+nasm $1.asm -o $1.bin
+
+if [ $? -ne 0 ]; then
+	exit $?
 fi
 
 echo "done"
+
 cd ..
-./assemble.sh "BASIC/$1.bin"
+echo -n "assembling stage1.asm..."
+nasm stage1.asm -o DealOS.bin
+
+if [ $? -ne 0 ]; then
+	exit $?
+fi
+
+echo "done"
+
+echo -n "concatenating $1.bin to DealOS.bin..."
+cat "BASIC/$1.bin" >> DealOS.bin
+echo "done"
 
 rval=$?
 if [ $rval -ne 0 ]; then

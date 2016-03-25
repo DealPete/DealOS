@@ -13,9 +13,10 @@ void parseString();
 "GO TO"					{ return GOTO; }
 [ \t] ;
 [0-9]+					{ yylval.ival = atoi(yytext); return INTEGER; }
-[=+*/\-,;<>]			{ return *yytext; }
+[=+*/\-,;<>()]			{ return *yytext; }
 "CLS"					{ return CLS; }
 "DATA"					{ return DATA; }
+"DIM"					{ return DIM; }
 "END"					{ return END; }
 "GOTO"					{ return GOTO; }
 "IF"					{ return IF; }
@@ -25,7 +26,7 @@ void parseString();
 "READ"					{ return READ; }
 "REM"[^\n]* ;
 "THEN"					{ return THEN; }
-[A-Z][A-Z0-9]*(%|$)?	{ yylval.sval = strdup(yytext); return VAR; }
+[A-Z][A-Z0-9]*(%|$)?	{ yylval.sval = strdup(yytext); return SYM; }
 .						yyerror("unknown token");
 %%
 

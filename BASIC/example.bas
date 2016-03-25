@@ -1,6 +1,3 @@
-20 ASTRING$ = "Hello World"
-30 ANUMBER% = 10
-35 PRINT "I'm here."
-40 PRINT ASTRING$
-50 PRINT ANUMBER%
-55 PRINT "At the end."
+10 PRINT "Enter a string"
+20 INPUT A$
+30 PRINT "You entered", A$
