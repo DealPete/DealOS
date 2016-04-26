@@ -13,4 +13,4 @@ So far the following operating system functions are implemented:
 * Load a program into memory and execute it.
 
 Todo:
-* Get Hunt the Wumpus running. Strategy: write a BASIC->BIOS compiler.
+* Get ADVENTURE running. Strategy: write a FORTRAN->BIOS compiler.
