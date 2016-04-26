@@ -1,8 +1,7 @@
 [bits 16]
 
 	call enable_a20line
-	hlt
-
+	jmp $
 
 %include "BASIC/blib.asm"
 %include "enableA20.asm"

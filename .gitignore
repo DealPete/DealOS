@@ -1,4 +1,4 @@
-*.f
+_build
 *.BAS
 *.bas
 *.swp
