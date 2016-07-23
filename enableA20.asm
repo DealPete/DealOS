@@ -63,9 +63,10 @@ check_a20:
     je check_a20__exit
  
     mov ax, 1
- 
+ 	
 check_a20__exit:
 	pop ds
+	sti
     ret
 
 a20_error		db	"Error! Couldn't disable A20 line.", 0
