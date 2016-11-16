@@ -46,7 +46,7 @@ done:
 
 ; ---------------------------------------------------------------------
 ; VARIABLES
-    welcomeMessage db `Welcome to DealOS!\n\r`, 0
+    welcomeMessage db "Welcome to DealOS!", 0x0a, 0x0D, 0
     
     times 510-($-$$) db 0
 

@@ -211,4 +211,4 @@ getStringInput:
 	SECTION .data
 prompt	db	"?  ", 0
 redo	db	"?Redo from start  ", 0
-newl	db	`\n\r`, 0
+newl	db	0x0a, 0x0d, 0
