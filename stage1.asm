@@ -9,8 +9,6 @@
     mov ax, 07C0h	; set data segment to beginning of program in memory
     mov ds, ax
 
-    mov ah, 0Eh
-    
     mov si, welcomeMessage
 
     mov ah, 0Eh		
