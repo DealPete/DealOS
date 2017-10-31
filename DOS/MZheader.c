@@ -1,6 +1,7 @@
 // Print details of a MS-DOS .EXE file header.
 
 #include <stdio.h>
+#include <string.h>
 
 struct DOS_Header 
 {
@@ -48,7 +49,8 @@ int main(int argc, char *argv[]) {
 
 	printf("Number of blocks: %d\n", header.nblocks);
     printf("Number of entries in relocation table: %d\n", header.nreloc);
-    printf("Header size: %d bytes\n\n", 16*header.hdrsize);
+    printf("Header size: %d bytes\n", 16*header.hdrsize);
+	printf("(EXE data starts at %xh)\n\n", 16*header.hdrsize);
     
     printf("Stack segment: %xh\n", header.ss);
     printf("Stack pointer: %xh\n", header.sp);
